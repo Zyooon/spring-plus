@@ -3,23 +3,33 @@ package org.example.expert.domain.todo.repository;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.example.expert.domain.todo.dto.request.TodoListRequest;
+import org.example.expert.domain.todo.entity.QTodo;
 import org.example.expert.domain.todo.entity.Todo;
+import org.example.expert.domain.user.entity.QUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 
 @Repository
 public class TodoRepositoryImpl implements TodoRepositoryCustom {
 
-	@PersistenceContext
-	private EntityManager entityManager;
+	private final EntityManager entityManager;
+	private final JPAQueryFactory queryFactory;
+
+	// 💡 생성자 직접 정의
+	public TodoRepositoryImpl(EntityManager entityManager) {
+		this.entityManager = entityManager;
+		this.queryFactory = new JPAQueryFactory(entityManager);
+	}
 
 	@Override
 	public Page<Todo> findAllBySearch(Pageable pageable, TodoListRequest request) {
@@ -67,5 +77,19 @@ public class TodoRepositoryImpl implements TodoRepositoryCustom {
 		long total = countQuery.getSingleResult();
 
 		return new PageImpl<>(content, pageable, total);
+	}
+
+	@Override
+	public Optional<Todo> findByIdWithUserQueryDsl(Long todoId) {
+		QTodo todo = QTodo.todo;
+		QUser user = QUser.user;
+
+		return Optional.ofNullable(
+			queryFactory
+				.selectFrom(todo)
+				.leftJoin(todo.user, user).fetchJoin()
+				.where(todo.id.eq(todoId))
+				.fetchOne()
+		);
 	}
 }
