@@ -7,6 +7,7 @@ import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.common.entity.Timestamped;
 import org.example.expert.domain.manager.entity.Manager;
 import org.example.expert.domain.user.entity.User;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.ArrayList;
@@ -30,9 +31,11 @@ public class Todo extends Timestamped {
     private User user;
 
     @OneToMany(mappedBy = "todo", cascade = CascadeType.REMOVE)
+    @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
     @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL)
+    @BatchSize(size = 100)
     private List<Manager> managers = new ArrayList<>();
 
     public Todo(String title, String contents, String weather, User user) {

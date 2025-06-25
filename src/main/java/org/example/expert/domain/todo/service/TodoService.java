@@ -6,8 +6,10 @@ import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
 import org.example.expert.domain.todo.dto.request.TodoListRequest;
 import org.example.expert.domain.todo.dto.request.TodoSaveRequest;
+import org.example.expert.domain.todo.dto.request.TodoTitleRequest;
 import org.example.expert.domain.todo.dto.response.TodoResponse;
 import org.example.expert.domain.todo.dto.response.TodoSaveResponse;
+import org.example.expert.domain.todo.dto.response.TodoTitleResponse;
 import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.dto.response.UserResponse;
@@ -51,7 +53,7 @@ public class TodoService {
     public Page<TodoResponse> getTodos(int page, int size, TodoListRequest request) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllBySearch(pageable, request);
+        Page<Todo> todos = todoRepository.findAllByJPQL(pageable, request);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
@@ -81,4 +83,15 @@ public class TodoService {
         );
     }
 
+    public Page<TodoTitleResponse> getTodosWithTitle(int page, int size, TodoTitleRequest request) {
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<Todo> todos = todoRepository.findAllByQueryDsl(pageable, request);
+
+        return todos.map(todo -> new TodoTitleResponse(
+            todo.getTitle(),
+            todo.getManagers().size(),
+            todo.getComments().size()
+        ));
+    }
 }
