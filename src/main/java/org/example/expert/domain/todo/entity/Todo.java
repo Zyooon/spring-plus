@@ -34,7 +34,7 @@ public class Todo extends Timestamped {
     @BatchSize(size = 100)
     private List<Comment> comments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "todo", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "todo", cascade = CascadeType.PERSIST)
     @BatchSize(size = 100)
     private List<Manager> managers = new ArrayList<>();
 
