@@ -3,6 +3,8 @@ package org.example.expert.domain.manager.service;
 import lombok.RequiredArgsConstructor;
 import org.example.expert.domain.common.dto.AuthUser;
 import org.example.expert.domain.common.exception.InvalidRequestException;
+import org.example.expert.domain.log.dto.request.LogRequest;
+import org.example.expert.domain.log.service.LogService;
 import org.example.expert.domain.manager.dto.request.ManagerSaveRequest;
 import org.example.expert.domain.manager.dto.response.ManagerResponse;
 import org.example.expert.domain.manager.dto.response.ManagerSaveResponse;
@@ -28,6 +30,7 @@ public class ManagerService {
     private final ManagerRepository managerRepository;
     private final UserRepository userRepository;
     private final TodoRepository todoRepository;
+    private final LogService logService;
 
     @Transactional
     public ManagerSaveResponse saveManager(AuthUser authUser, long todoId, ManagerSaveRequest managerSaveRequest) {
@@ -35,12 +38,16 @@ public class ManagerService {
         User user = User.fromAuthUser(authUser);
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new InvalidRequestException("Todo not found"));
+        Long managerUserId = managerSaveRequest.getManagerUserId();
+
+        //로그 생성
+        saveLog(user, todo, managerUserId);
 
         if (todo.getUser() == null || !ObjectUtils.nullSafeEquals(user.getId(), todo.getUser().getId())) {
             throw new InvalidRequestException("담당자를 등록하려고 하는 유저가 유효하지 않거나, 일정을 만든 유저가 아닙니다.");
         }
 
-        User managerUser = userRepository.findById(managerSaveRequest.getManagerUserId())
+        User managerUser = userRepository.findById(managerUserId)
                 .orElseThrow(() -> new InvalidRequestException("등록하려고 하는 담당자 유저가 존재하지 않습니다."));
 
         if (ObjectUtils.nullSafeEquals(user.getId(), managerUser.getId())) {
@@ -54,6 +61,15 @@ public class ManagerService {
                 savedManagerUser.getId(),
                 new UserResponse(managerUser.getId(), managerUser.getEmail())
         );
+    }
+
+    private void saveLog(User user, Todo todo, Long managerUserId){
+        //로그 생성
+        try {
+            logService.saveLog(new LogRequest(user.getId(), todo.getId(), managerUserId));
+        } catch (Exception e) {
+            throw new IllegalStateException("로그 저장 에러 발생", e);
+        }
     }
 
     public List<ManagerResponse> getManagers(long todoId) {

@@ -24,14 +24,6 @@ public class UserAdminService {
 
         UserRole newRole = UserRole.of(userRoleChangeRequest.getRole());
 
-        //로그 생성
-        logService.saveLog(new LogRequest(user, newRole));
-        try {
-            logService.saveLog(new LogRequest(user, newRole));
-        } catch (Exception e) {
-            throw new IllegalStateException("로그 저장 에러 발생", e);
-        }
-
         user.updateRole(newRole);
     }
 }
